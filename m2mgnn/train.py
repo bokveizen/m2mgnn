@@ -6,6 +6,7 @@ import numpy as np
 import uuid
 from torch_geometric.utils import add_remaining_self_loops, remove_self_loops
 from model import M2MGNN
+from pathlib import Path
 
 
 parser = argparse.ArgumentParser()
@@ -60,7 +61,9 @@ else:
     dataset = HeterophilousGraphDataset(root='data/', name=args.dataset)
 
 data = dataset[0].to(device)
-checkpt_file = 'trained_model_dict/' + uuid.uuid4().hex + '.pt'
+p_trained_model = Path('trained_model_dict')
+p_trained_model.mkdir(parents=True, exist_ok=True)
+checkpt_file = p_trained_model / (uuid.uuid4().hex + '.pt')
 
 data.edge_index, _ = add_remaining_self_loops(data.edge_index)
 
@@ -73,6 +76,7 @@ def train_step(train_mask, model):
     model.train()
     optimizer.zero_grad()
     out = model(data.x, data.edge_index)
+    train_mask = train_mask.bool()
     loss = criterion(out[train_mask], data.y[train_mask]) + args.lamda * model.reg
     loss.backward()
     optimizer.step()
@@ -84,6 +88,7 @@ def val_step(val_mask, model):
     with torch.no_grad():
         out = model(data.x, data.edge_index)
         pred = out.argmax(dim=1)
+        val_mask = val_mask.bool()
         loss = criterion(out[val_mask], data.y[val_mask])
         acc = int((pred[val_mask] == data.y[val_mask]).sum()) / int(val_mask.sum())
         return loss.item(), acc
@@ -94,6 +99,7 @@ def test_step(test_mask, model):
     with torch.no_grad():
         out = model(data.x, data.edge_index)
         pred = out.argmax(dim=1)
+        test_mask = test_mask.bool()
         loss = criterion(out[test_mask], data.y[test_mask])
         acc = int((pred[test_mask] == data.y[test_mask]).sum()) / int(test_mask.sum())
         return loss.item(), acc
