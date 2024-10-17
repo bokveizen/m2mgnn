@@ -35,7 +35,7 @@ parser.add_argument('--beta', type=float, default=0.4,
                     help='Strength of ego-feature.')
 parser.add_argument('--temperature', type=float, default=1.,
                     help='Temperature.')
-parser.add_argument('--remove_self_loop', type=bool, default=True,
+parser.add_argument('--remove_self_loop', action='store_true',
                     help='If set to True, dont use self loop.')
 parser.add_argument('--device', type=str, default='0',
                     help='gpu id.')
